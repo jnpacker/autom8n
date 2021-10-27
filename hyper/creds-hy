@@ -1,0 +1,2 @@
+
+oc -n clusters-$1 get secrets kubeadmin-password -o json | jq '.data.password' | tr -d '\"' | base64 -d

@@ -1,0 +1,30 @@
+apiVersion: hypershift.openshift.io/v1alpha1
+kind: NodePool
+metadata:
+  name: xlarge-expand-workers-01
+  namespace: clusters
+spec:
+  clusterName: xlarge
+  nodeCount: 2
+  nodePoolManagement:
+    #autoRepair: false
+    #replace:
+    #  rollingUpdate:
+    #    maxSurge: 1
+    #    maxUnavailable: 0
+    #  strategy: RollingUpdate
+    upgradeType: Replace
+  platform:
+    aws:
+      #instanceProfile: INSTANCE_PROFILE
+      instanceType: m5.xlarge
+      rootVolume:
+        size: 30
+        type: gp2
+      securityGroups:
+      - id: sg-XXXXXXXXXXXXXXXXX
+      subnet:
+        id: subnet-XXXXXXXXXXXXXXXXX
+    type: AWS
+  release:
+    image: quay.io/openshift-release-dev/ocp-release:4.9.0-x86_64
