@@ -4,6 +4,10 @@ hyCmd=hypershift
 hyp_cluster_name=$1
 ocpver=$2
 
+# Store the kube context so that ck use will work
+kubeconfig_tmp=$(mktemp)
+kubeconfig=$(echo $HOME)/.kube/config
+
 instanceType="m5.xlarge"
 replicaCount="3"
 volSize="35"
@@ -72,19 +76,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-rc=0
-while [ ${rc} -eq 0 ]; do
+rc=1
+while [ ${rc} -ne 0 ]; do
   printf "\n-===============================================================================================-\n\n"
   oc -n clusters-${hyp_cluster_name} get pods
   
-  oc -n clusters get hostedCluster | grep ${hyp_cluster_name} | grep False > /dev/null 2>&1 
+  oc -n clusters get hostedCluster ${hyp_cluster_name} | grep True > /dev/null 2>&1 
   rc=$?
+
+  podCount=`oc -n clusters-${hyp_cluster_name} get pods | wc -l 2> /dev/null`
+  if [ ${rc} -eq 0 ] && [ ${podCount} -gt 0 ]; then
+    rc=`oc -n clusters-${hyp_cluster_name} get pods | grep "0\/" | grep -v Completed | wc -l`
+  else
+    rc=1
+  fi
   sleep 5
 done
 
-# Store the kube context so that ck use will work
-kubeconfig_tmp=$(mktemp)
-kubeconfig=$(echo $HOME)/.kube/config
+
 
 ${hyCmd} create kubeconfig > ${kubeconfig_tmp}
 if [ $? -ne 0 ]; then
@@ -111,7 +120,7 @@ mv ${kubeconfig}.new ${kubeconfig}
 
 rm ${kubeconfig_tmp}
 
-oc config delete-context ${hyp_cluster_name}
+oc config delete-context ${hyp_cluster_name} > /dev/null 2>&1
 oc config rename-context clusters-${hyp_cluster_name} ${hyp_cluster_name}
 if [ $? -ne 0 ]; then
   echo "Error renaming context clusters-${hyp_cluster_name} to ${hyp_cluster_name}"
@@ -122,9 +131,16 @@ rc=0
 echo "Waiting for NodePool"
 c=0
 while [ ${rc} -eq 0 ]; do
+  oc config use-context ${hyp_cluster_name} > /dev/null 2>&1
   c=$((c + 1))
 
-  nodes=$(oc get nodes | wc -l)
+
+  printf "\n${timer}\n-===============================================================================================-\n\n"
+  if [ $((c % 12)) -eq 0 ]; then
+    echo "$((c / 12))min"
+  fi
+  oc get nodes
+  nodes=`oc get nodes | wc -l 2> /dev/null`
   if [ $nodes -gt 1 ]; then
     oc -n clusters get node | grep "NotReady" > /dev/null 2>&1
     rc=$?
@@ -132,11 +148,6 @@ while [ ${rc} -eq 0 ]; do
   
   sleep 5
   
-  if [ $((c % 12)) -eq 0 ]; then
-    printf "$((c / 12))min"
-  else
-    printf "."
-  fi
 done
 
 printf "\n"
