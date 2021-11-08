@@ -10,6 +10,17 @@ TYPE_SPEED=30
 DEMO_PROMPT="☸️ $ "
 NO_WAIT=1
 
+if [ "$1" == "" ]; then
+  comment "Please include the number prefix to add to your hypershift guest demo cluster"
+  exit 1
+fi
+SUFFIX=$1
+
+OCP_VERSION=4.9.5
+if [ "$2" != "" ]; then
+  OCP_VERSION=$2
+fi
+
 function comment() {
   echo -e '\033[0;33m>>> '$1' <<<\033[0m'
   wait
@@ -26,5 +37,5 @@ pe "hypershift install"
 
 comment "Deploy hypershift"
 cd hyper
-pe "./create-hypershift.sh jnp-summit 4.9.0 -i m5.2xlarge -r 3 -s 35"
+pe "./create-hypershift.sh jnp-demo${SUFFIX} ${OCP_VERSION} -i t3.2xlarge -r 3 -s 35"
 cd ..

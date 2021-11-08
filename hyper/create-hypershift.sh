@@ -7,8 +7,13 @@ ocpver=$2
 # Store the kube context so that ck use will work
 kubeconfig_tmp=$(mktemp)
 kubeconfig=$(echo $HOME)/.kube/config
+kubeconfig_context=$(mktemp --suffix=_context)
+cp ${kubeconfig} ${kubeconfig_context}
 
-instanceType="m5.xlarge"
+# Make sure we restore the context on all types of exit
+trap restore_context EXIT
+
+instanceType="t3.xlarge"
 replicaCount="3"
 volSize="35"
 
@@ -22,8 +27,19 @@ function usage() {
 
 }
 
+export KUBECONFIG=${kubeconfig_context}
+curContext=$(oc config current-context)
+if [ "${curContext}" != "${HYP_MANAGEMENTCLUSTER}" ]; then
+  echo ">> WARNING << * ${curContext} does not match Hypershift management cluster context ${HYP_MANAGEMENTCLUSTER}"
+  echo "              * Press Ctrl-c to cancel, or press <ENTER> to switch to ${HYP_MANAGEMENTCLUSTER}"
+  read
+  export KUBECONFIG=${HYP_MANAGEMENTCLUSTER}
+fi
+
 function restore_context() {
-  oc config use-context ${orig_context}
+  #oc config use-context ${orig_context}
+  rm ${kubeconfig_context}
+  rm ${kubeconfig_tmp}
 }
 
 if [ "$hyp_cluster_name" == "" ]; then
@@ -93,32 +109,25 @@ while [ ${rc} -ne 0 ]; do
   sleep 5
 done
 
-
-
+# Generate the Kubeconfig for the existing clusters
 ${hyCmd} create kubeconfig > ${kubeconfig_tmp}
 if [ $? -ne 0 ]; then
   echo "Error creating kubeconfig"
-fi  
+fi
+
+#sed -i "s/current-context: .*$//g" ${kubeconfig_tmp}
 
 echo "Backup ${kubeconfig} to ${kubeconfig}.bak"
 cp ${kubeconfig} ${kubeconfig}.bak
-orig_context=$(oc config current-context)
-
-# Make sure we restore the context on all types of exit
-trap restore_context EXIT
 
 echo "Creating context ${hyp_cluster_name} for hypershift cluster"
-KUBECONFIG="${kubeconfig_tmp}:${kubeconfig}" oc config view --flatten > ${kubeconfig}.new
+KUBECONFIG="${kubeconfig_tmp}:${kubeconfig}" oc config view --flatten > ${kubeconfig_tmp}.new
 if [ $? -ne 0 ]; then
   echo "Error trying create context"
   exit 1
 fi
 
-unset KUBECONFIG
-
-mv ${kubeconfig}.new ${kubeconfig}
-
-rm ${kubeconfig_tmp}
+mv ${kubeconfig_tmp}.new ${kubeconfig_context}
 
 oc config delete-context ${hyp_cluster_name} > /dev/null 2>&1
 oc config rename-context clusters-${hyp_cluster_name} ${hyp_cluster_name}
@@ -126,6 +135,12 @@ if [ $? -ne 0 ]; then
   echo "Error renaming context clusters-${hyp_cluster_name} to ${hyp_cluster_name}"
   exit 1
 fi
+
+
+#KUBECONFIG points to kubeconfig_context
+origContext=$(KUBECONFIG=${kubeconfig} oc config current-context)
+oc config use-context ${origContext} > /dev/null 2>&1
+cp ${kubeconfig_context} ${kubeconfig}
 
 rc=0
 echo "Waiting for NodePool"
