@@ -30,10 +30,10 @@ function comment() {
 comment "Instructions for preparing the environment"
 echo "1. Connect to you aws account, this means that the credential file: ~/.aws/credentials exists"
 echo "2. In this directory, create the file \"pull-secret\" that has your OpenShift pull secret (not a kube secret)"
-echo "3. Connect to the OpenShift cluster to be used for Management of hypershift"
+echo "3. Connect to the OpenShift cluster to be used as the management cluster for hypershift hosted clusters"
 
-comment "Install hypershift"
-pe "hypershift install"
+#comment "Install hypershift"
+#pe "hypershift install"
 
 comment "Deploy hypershift"
 cd hyper
