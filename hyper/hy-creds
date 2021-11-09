@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+clusterName=$1
+if [ "${clusterName}" == "" ]; then
+  printf "\n>> WARNING <<  Missing clusterName: hy-creds <CLUSTER_NAME>\n"
+  exit 1
+fi
+
+kubeconfig=$(echo $HOME)/.kube/config
+kubeconfig_context=$(mktemp --suffix=_context)
+cp ${kubeconfig} ${kubeconfig_context}
+export KUBECONFIG=${kubeconfig_context}
+
+oc config use-context ${HYP_MANAGEMENTCLUSTER} > /dev/null 2>&1
+passwd=$(oc -n clusters-${clusterName} get secrets kubeadmin-password -o json | jq '.data.password' | tr -d '\"' | base64 -d)
+
+oc config use-context ${clusterName} > /dev/null 2>&1
+url=$(oc -n openshift-console get route console -o jsonpath='{.status.ingress[*].host}')
+
+echo "User name: kubeadmin"
+echo "Password : ${passwd}"
+printf "\n"
+echo "OCP Console: https://${url}"
+echo "ACM Console: https://${url/console-openshift-console/multicloud-console}"
+printf "\n"
+
+rm ${kubeconfig_context}
