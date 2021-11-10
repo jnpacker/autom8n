@@ -12,7 +12,16 @@ cp ${kubeconfig} ${kubeconfig_context}
 export KUBECONFIG=${kubeconfig_context}
 
 oc config use-context ${HYP_MANAGEMENTCLUSTER} > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "Could not use-context: ${HYP_MANAGEMENTCLUSTER}"
+  exit 1
+fi
+
 passwd=$(oc -n clusters-${clusterName} get secrets kubeadmin-password -o json | jq '.data.password' | tr -d '\"' | base64 -d)
+if [ $? -ne 0 ]; then
+  echo "Could not find password for context: ${clusterName}"
+  exit 1
+fi
 
 oc config use-context ${clusterName} > /dev/null 2>&1
 url=$(oc -n openshift-console get route console -o jsonpath='{.status.ingress[*].host}')

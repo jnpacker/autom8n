@@ -8,7 +8,6 @@ if [ "${curContext}" != "${HYP_MANAGEMENTCLUSTER}" ]; then
   echo ">> WARNING << * ${curContext} does not match Hypershift management cluster context ${HYP_MANAGEMENTCLUSTER}"
   echo "              * Press Ctrl-c to cancel, or press <ENTER> to switch to ${HYP_MANAGEMENTCLUSTER}"
   read
-  export KUBECONFIG=${HYP_MANAGEMENTCLUSTER}
 fi
 
 if [ "${hosted_name}" == "" ]; then

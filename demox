@@ -37,5 +37,5 @@ echo "3. Connect to the OpenShift cluster to be used as the management cluster f
 
 comment "Deploy hypershift"
 cd hyper
-pe "./create-hypershift.sh jnp-demo${SUFFIX} ${OCP_VERSION} -i t3.2xlarge -r 3 -s 35"
+pe "./create-hypershift.sh jnp-demo${SUFFIX} ${OCP_VERSION} -i t3.2xlarge -r 2 -s 35"
 cd ..

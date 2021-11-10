@@ -1,0 +1,27 @@
+#!/bin/bash
+
+DEMO_DIR="$( dirname "${BASH_SOURCE[0]}" )"
+ROOT_DIR="$( cd ${DEMO_DIR}/.. && pwd)"
+
+. demo-magic
+
+TYPE_SPEED=30
+# PROMPT_AFTER=1
+DEMO_PROMPT="☸️ $ "
+NO_WAIT=1
+
+comment "Initialize hypershift cli"
+pe "git clone git@github.com:openshift/hypershift.git"
+
+pe "cd hypershift && make build"
+
+hyCmd="$(pwd)/hypershift/bin/hypershift"
+
+comment "Check connection to OpenShift"
+oc projects > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  comment ">> WARNING <<  Connect to OpenShift before running setup"
+  exit 1
+fi
+
+pe "${hyCmd} install"
