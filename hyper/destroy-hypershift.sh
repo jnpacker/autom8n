@@ -23,7 +23,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-${hyCmd} destroy cluster --aws-creds ~/.aws/credentials --base-domain dev06.red-chesterfield.com --name ${hosted_name}
+${hyCmd} destroy cluster aws --aws-creds ~/.aws/credentials --base-domain dev06.red-chesterfield.com --name ${hosted_name}
 if [ $? -ne 0 ]; then
   "Failed to destroy cluster correctly"
   exit 1

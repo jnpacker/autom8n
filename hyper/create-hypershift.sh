@@ -86,7 +86,7 @@ echo "           cluster size: ${replicaCount}x ${instanceType}"
 echo "  Root volume size (GB): ${volSize}"
 echo "          OpenShift ver: ${ocpver}"
 
-${hyCmd} create cluster --aws-creds ~/.aws/credentials --base-domain dev06.red-chesterfield.com --instance-type ${instanceType} --name ${hyp_cluster_name} --node-pool-replicas ${replicaCount} --pull-secret ./pull-secret --release-image quay.io/openshift-release-dev/ocp-release:${ocpver}-x86_64 --root-volume-size ${volSize}
+${hyCmd} create cluster aws --aws-creds ~/.aws/credentials --base-domain dev06.red-chesterfield.com --instance-type ${instanceType} --name ${hyp_cluster_name} --node-pool-replicas ${replicaCount} --pull-secret ./pull-secret --release-image quay.io/openshift-release-dev/ocp-release:${ocpver}-x86_64 --root-volume-size ${volSize}
 if [ $? -ne 0 ]; then
   echo "hypershift create returned an error"
   exit 1
